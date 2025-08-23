@@ -1,217 +1,110 @@
 # DailyPush 🚀
 
-**DailyPush** é uma ferramenta Python que automatiza commits diários no GitHub, mantendo suas estatísticas sempre ativas e verdes! 
+**Automated daily commits to keep your GitHub stats always active and green!**
 
-## ✨ Características
+## ✨ What it does
 
-- 🤖 **Commits automáticos** todos os dias
-- 📝 **Mensagens variadas** e criativas para cada commit
-- 📊 **Arquivos de atualização** com timestamp e estatísticas
-- ⏰ **Agendamento flexível** para execução automática
-- 📋 **Logging completo** de todas as operações
-- 🔄 **Push automático** para o repositório remoto
+- 🤖 **Automatically creates** 25-30 commits daily
+- 📝 **Generates unique files** with timestamps
+- 🚀 **Pushes to GitHub** automatically
+- 📊 **Keeps your stats** always active
 
-## 🚀 Instalação
+## 🚀 Quick Setup
 
-### Pré-requisitos
-
-- Python 3.7+
-- Git configurado no sistema
-- Repositório Git inicializado
-
-### 1. Clone o repositório
-
+### 1. Clone & Install
 ```bash
-git clone <seu-repositorio>
+git clone https://github.com/YOUR_USERNAME/DailyPush.git
 cd DailyPush
-```
-
-### 2. Instale as dependências
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure o repositório Git
-
+### 2. Configure
 ```bash
-# Se ainda não tiver um repositório Git
-git init
-git remote add origin <URL-DO-SEU-REPOSITORIO>
+# Copy example config
+cp env.example .env
 
-# Configure suas credenciais Git
-git config user.name "Seu Nome"
-git config user.email "seu.email@exemplo.com"
+# Edit .env with your info
+GIT_USER_NAME=Your Name
+GIT_USER_EMAIL=your.email@example.com
 ```
 
-## 📖 Como usar
-
-### Uso básico
-
-Execute o script principal para fazer um commit imediato:
-
+### 3. Test
 ```bash
-python daily_push.py
-```
+# Option 1: Main script (recommended)
+python run.py
 
-### Agendamento automático
+# Option 2: Direct module
+python src/main.py
 
-Para executar commits automáticos em horários específicos:
-
-```bash
+# Option 3: Local scheduler
 python scheduler.py
 ```
 
-O scheduler está configurado para executar:
-- **09:00** - Commit matinal
-- **18:00** - Commit vespertino
+## 🌐 GitHub Actions (Recommended)
 
-## ⚙️ Configuração
+**Already configured!** The workflow runs automatically every day at 9:00 AM UTC.
 
-### Variáveis de ambiente (opcional)
+### To activate:
+1. Push to GitHub: `git push -u origin main`
+2. Go to Actions tab
+3. Enable workflows
+4. Done! 🎉
 
-Crie um arquivo `.env` na raiz do projeto:
-
-```env
-# Configurações do Git (se necessário)
-GIT_USERNAME=seu_usuario
-GIT_EMAIL=seu_email@exemplo.com
-```
-
-### Personalização das mensagens
-
-Edite o arquivo `daily_push.py` e modifique a lista `activities` na função `get_random_activity_message()` para personalizar as mensagens dos commits.
-
-## 📁 Estrutura do projeto
+## 📁 Project Structure
 
 ```
 DailyPush/
-├── daily_push.py      # Script principal
-├── scheduler.py       # Agendador automático
-├── requirements.txt   # Dependências Python
-├── README.md         # Esta documentação
-├── daily_updates/    # Arquivos de atualização diária
-└── *.log            # Arquivos de log
+├── src/                  # Source code
+│   ├── __init__.py      # Package initialization
+│   ├── main.py          # Main entry point
+│   ├── daily_push.py    # Core DailyPush class
+│   ├── git_manager.py   # Git operations
+│   ├── commit_manager.py # Commit management
+│   └── file_manager.py  # File creation
+├── run.py               # Main script (recommended)
+├── scheduler.py         # Local scheduler
+├── requirements.txt     # Python dependencies
+├── .env                # Your configuration (create from env.example)
+├── env.example         # Configuration template
+├── .github/workflows/  # GitHub Actions (auto-deployment)
+└── README.md          # This file
 ```
 
-## 🔧 Funcionamento
+## ⚙️ Configuration
 
-1. **Verificação**: O script verifica se há mudanças no repositório
-2. **Criação**: Se não houver mudanças, cria um arquivo de atualização
-3. **Commit**: Faz o commit com uma mensagem aleatória
-4. **Push**: Envia as mudanças para o repositório remoto
-5. **Logging**: Registra todas as operações em arquivos de log
+Edit `.env` file to customize:
 
-## 🌐 Opções de hospedagem
+```env
+# Git settings
+GIT_USER_NAME=Your Name
+GIT_USER_EMAIL=your.email@example.com
 
-### 1. GitHub Actions (Recomendado)
-
-Crie um arquivo `.github/workflows/daily-push.yml`:
-
-```yaml
-name: Daily Push
-
-on:
-  schedule:
-    - cron: '0 9 * * *'  # Executa às 9:00 AM UTC
-  workflow_dispatch:      # Permite execução manual
-
-jobs:
-  daily-push:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-    
-    - name: Configure Git
-      run: |
-        git config user.name "GitHub Action"
-        git config user.email "action@github.com"
-    
-    - name: Run Daily Push
-      run: python daily_push.py
+# DailyPush settings
+COMMITS_MIN=25
+COMMITS_MAX=30
+EXECUTION_TIME=09:00
 ```
 
-### 2. Servidor VPS/Local
+## 🔄 How it works
 
-Use o scheduler com systemd ou cron:
+1. **Daily execution** (9:00 AM UTC)
+2. **Creates 25-30 commits** with unique files
+3. **Automatic push** to GitHub
+4. **Your stats stay active** 🎯
 
-```bash
-# Com systemd (Linux)
-sudo systemctl enable daily-push
-sudo systemctl start daily-push
+## 📊 Result
 
-# Com cron
-crontab -e
-# Adicione: 0 9 * * * cd /caminho/para/DailyPush && python daily_push.py
-```
+- **GitHub profile**: Always green and active
+- **Commit history**: Rich and diverse
+- **Zero maintenance**: Fully automated
+- **Daily activity**: Guaranteed
 
-### 3. Serviços de nuvem
+## 🆘 Need help?
 
-- **Heroku**: Deploy como app Python
-- **Railway**: Deploy automático
-- **Render**: Serviço gratuito com cron jobs
-
-## 🐛 Solução de problemas
-
-### Erro: "Não é um repositório Git válido"
-
-```bash
-git init
-git remote add origin <URL-DO-REPOSITORIO>
-```
-
-### Erro: "Falha na autenticação"
-
-Configure suas credenciais Git:
-
-```bash
-git config user.name "Seu Nome"
-git config user.email "seu.email@exemplo.com"
-```
-
-### Erro: "Falha no push"
-
-Verifique se o remote está configurado:
-
-```bash
-git remote -v
-git remote add origin <URL-DO-REPOSITORIO>
-```
-
-## 📝 Logs
-
-O projeto gera logs detalhados:
-
-- `daily_push.log` - Logs do script principal
-- `scheduler.log` - Logs do agendador
-
-## 🤝 Contribuição
-
-Contribuições são bem-vindas! Sinta-se à vontade para:
-
-- 🐛 Reportar bugs
-- 💡 Sugerir melhorias
-- 📝 Melhorar a documentação
-- 🚀 Adicionar novas funcionalidades
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
-
-## ⚠️ Aviso importante
-
-**DailyPush** é uma ferramenta para manter atividade no GitHub de forma lúdica e educacional. Use com responsabilidade e respeite as políticas do GitHub.
+- **Local test**: `python run.py`
+- **Manual execution**: GitHub Actions → Run workflow
+- **Check logs**: Actions tab → View logs
 
 ---
 
-**Mantenha seu GitHub sempre ativo com DailyPush! 🚀✨**
+**Keep your GitHub alive with DailyPush! 🚀✨**

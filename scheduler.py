@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Scheduler para DailyPush - Executa commits automáticos em intervalos regulares
+Scheduler - Schedules DailyPush execution locally
 """
 
 import schedule
@@ -9,63 +9,51 @@ import logging
 import sys
 from pathlib import Path
 
-# Adiciona o diretório atual ao path para importar daily_push
-sys.path.append(str(Path(__file__).parent))
+# Add src to path to import modules
+sys.path.append(str(Path(__file__).parent / "src"))
 
-from daily_push import DailyPush
+from main import main
 
-# Configuração de logging
+# Configure logging (console only, no file logging)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('scheduler.log'),
         logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)
 
 def run_daily_push():
-    """Executa o DailyPush"""
+    """Execute DailyPush"""
     try:
-        daily_push = DailyPush()
-        success = daily_push.daily_routine()
-        
-        if success:
-            logger.info("✅ DailyPush executado com sucesso!")
-        else:
-            logger.error("❌ DailyPush falhou!")
-            
+        logger.info("🕐 Executing scheduled DailyPush...")
+        main()
+        logger.info("✅ Scheduled DailyPush executed successfully!")
     except Exception as e:
-        logger.error(f"Erro ao executar DailyPush: {e}")
+        logger.error(f"❌ Error executing scheduled DailyPush: {e}")
 
-def main():
-    """Função principal do scheduler"""
-    logger.info("🚀 Iniciando DailyPush Scheduler...")
+def main_scheduler():
+    """Main scheduler function"""
+    logger.info("🚀 Starting DailyPush Scheduler...")
     
-    # Agenda execução diária às 9:00 AM
-    schedule.every().day.at("09:00").do(run_daily_push)
+    # Schedule daily execution at 09:00 (configurable via .env)
+    execution_time = os.getenv('EXECUTION_TIME', '09:00')
+    schedule.every().day.at(execution_time).do(run_daily_push)
     
-    # Agenda execução diária às 6:00 PM (alternativa)
-    schedule.every().day.at("18:00").do(run_daily_push)
-    
-    # Para testes, também agenda execução a cada hora
-    # schedule.every().hour.do(run_daily_push)
-    
-    logger.info("📅 Agendamentos configurados:")
-    logger.info("   - Diário às 09:00")
-    logger.info("   - Diário às 18:00")
-    
-    logger.info("⏰ Scheduler rodando... Pressione Ctrl+C para parar")
+    logger.info(f"📅 DailyPush scheduled to run every day at {execution_time}")
+    logger.info("⏰ Press Ctrl+C to stop the scheduler")
     
     try:
         while True:
             schedule.run_pending()
-            time.sleep(60)  # Verifica a cada minuto
-            
+            time.sleep(60)  # Check every minute
     except KeyboardInterrupt:
-        logger.info("🛑 Scheduler interrompido pelo usuário")
+        logger.info("🛑 Scheduler stopped by user")
         sys.exit(0)
 
 if __name__ == "__main__":
-    main()
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    main_scheduler()
