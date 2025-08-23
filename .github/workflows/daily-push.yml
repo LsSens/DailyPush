@@ -4,10 +4,12 @@ on:
   schedule:
     - cron: '0 9 * * *'  # Executa às 9:00 AM UTC todos os dias
   workflow_dispatch:      # Permite execução manual
+  push:
+    branches: [ main, master ]  # Executa quando há push para main/master
 
 permissions:
   contents: write        # Permite escrita no repositório
-  pull-requests: write   # Permite criar/atualizar PRs
+  pull-requests: write 
 
 jobs:
   daily-push:
@@ -31,8 +33,8 @@ jobs:
     
     - name: Configure Git
       run: |
-        git config user.name "GitHub Action"
-        git config user.email "action@github.com"
+        git config user.name "Lucas Sens"
+        git config user.email "lucassousasens@gmail.com"
     
     - name: Run Daily Push
       run: python daily_push.py
