@@ -2,13 +2,13 @@ name: Daily Push
 
 on:
   schedule:
-    - cron: '0 9 * * *'  # Executa às 9:00 AM UTC todos os dias
-  workflow_dispatch:      # Permite execução manual
+    - cron: '0 9 * * *'
+  workflow_dispatch:
   push:
-    branches: [ main, master ]  # Executa quando há push para main/master
+    branches: [ main, master ]
 
 permissions:
-  contents: write        # Permite escrita no repositório
+  contents: write
   pull-requests: write 
 
 jobs:
