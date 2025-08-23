@@ -190,7 +190,7 @@ Este é um commit automático gerado pelo DailyPush.
         
         # Define um limite aleatório entre 25 e 30 commits
         if not hasattr(self, '_push_threshold'):
-            self._push_threshold = random.randint(1, 2)
+            self._push_threshold = random.randint(25, 30)
             logger.info(f"🎯 Limite de commits definido: {self._push_threshold}")
         
         # Faz push quando atingir o limite
