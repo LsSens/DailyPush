@@ -221,44 +221,41 @@ Este é um commit automático gerado pelo DailyPush.
             return False
     
     def daily_routine(self):
-        """Rotina diária completa: commit + push"""
+        """Rotina diária completa: múltiplos commits + push"""
         logger.info("Iniciando rotina diária...")
         
-        # SEMPRE faz o commit (para manter estatísticas ativas)
-        if self.make_commit():
-            # Verifica se deve fazer push
-            should_push, total_commits, commits_needed = self.should_push_to_github()
+        # Define quantos commits fazer (entre 25 e 30)
+        commits_to_make = random.randint(25, 30)
+        logger.info(f"🎯 Fazendo {commits_to_make} commits antes do push...")
+        
+        # Faz múltiplos commits
+        for i in range(commits_to_make):
+            logger.info(f"📝 Commit {i+1}/{commits_to_make}...")
             
-            if should_push:
-                logger.info(f"🎯 Total de commits: {total_commits}")
-                logger.info(f"📤 Fazendo push para GitHub (limite: {self._push_threshold})...")
-                
-                # Tenta fazer o push
-                try:
-                    if self.push_to_remote():
-                        logger.info("🎉 Rotina diária concluída com sucesso!")
-                        logger.info(f"✅ {total_commits} commits enviados para o GitHub!")
-                        logger.info("📊 Suas estatísticas do GitHub estão atualizadas!")
-                        
-                        # Reseta o limite para a próxima rodada
-                        self._push_threshold = random.randint(25, 30)
-                        logger.info(f"🔄 Novo limite definido: {self._push_threshold} commits")
-                    else:
-                        logger.warning("⚠️ Commit realizado, mas push falhou")
-                        logger.info("💡 Execute novamente para tentar o push")
-                except Exception as e:
-                    logger.warning(f"⚠️ Commit realizado, mas push falhou: {e}")
-                    logger.info("💡 Execute novamente para tentar o push")
+            if self.make_commit():
+                logger.info(f"✅ Commit {i+1} realizado com sucesso!")
             else:
-                logger.info(f"📊 Total de commits: {total_commits}")
-                logger.info(f" Acumulando commits... ({commits_needed} commits restantes)")
-                logger.info(f"🎯 Push será feito quando atingir {self._push_threshold} commits")
-                logger.info("🚀 Continue executando o DailyPush diariamente!")
-            
-            return True
-        else:
-            logger.error("❌ Falha ao fazer commit")
-            return False
+                logger.error(f"❌ Falha no commit {i+1}")
+                return False
+        
+        # Após todos os commits, faz o push
+        total_commits = len(list(self.repo.iter_commits()))
+        logger.info(f"🎉 Todos os {commits_to_make} commits realizados!")
+        logger.info(f"📤 Fazendo push de {total_commits} commits para GitHub...")
+        
+        try:
+            if self.push_to_remote():
+                logger.info("🎉 Rotina diária concluída com sucesso!")
+                logger.info(f"✅ {total_commits} commits enviados para o GitHub!")
+                logger.info("📊 Suas estatísticas do GitHub estão atualizadas!")
+            else:
+                logger.warning("⚠️ Todos os commits realizados, mas push falhou")
+                logger.info("💡 Execute novamente para tentar o push")
+        except Exception as e:
+            logger.warning(f"⚠️ Todos os commits realizados, mas push falhou: {e}")
+            logger.info("💡 Execute novamente para tentar o push")
+        
+        return True
 
 def main():
     """Função principal"""
