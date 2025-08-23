@@ -124,6 +124,4 @@ dmypy.json
 
 # DailyPush specific
 daily_updates/
-*.log
 .env.local
-daily_push.log
