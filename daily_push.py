@@ -132,8 +132,20 @@ Este é um commit automático gerado pelo DailyPush.
             logger.info("Criando arquivo para commit diario...")
             self.create_daily_file()
             
-            # Adiciona todas as mudanças
+            # Adiciona todos os arquivos exceto logs
             self.repo.index.add('*')
+            
+            # Remove arquivos de log do staging area
+            try:
+                # Lista todos os arquivos no staging area
+                staged_files = [item.a_path for item in self.repo.index.diff('HEAD')]
+                # Remove logs
+                for file_path in staged_files:
+                    if file_path.endswith('.log'):
+                        self.repo.index.remove([file_path])
+                        logger.info(f"Arquivo de log removido do commit: {file_path}")
+            except Exception as e:
+                logger.debug(f"Erro ao remover logs: {e}")
             
             # Cria a mensagem do commit
             message = self.get_random_activity_message()
