@@ -40,13 +40,25 @@ class DailyPush:
         self.initialize_repo()
         
     def initialize_repo(self):
-        """Inicializa o repositório Git"""
+        """Inicializa o repositório Git ou cria um novo se necessário"""
         try:
+            # Tenta abrir um repositório existente
             self.repo = git.Repo(self.repo_path)
-            logger.info(f"Repositório inicializado: {self.repo_path}")
+            logger.info(f"Repositório existente inicializado: {self.repo_path}")
         except git.InvalidGitRepositoryError:
-            logger.error(f"Diretório não é um repositório Git válido: {self.repo_path}")
-            sys.exit(1)
+            # Cria um novo repositório Git
+            logger.info("Criando novo repositório Git...")
+            self.repo = git.Repo.init(self.repo_path)
+            
+            # Configura usuário Git (pode ser sobrescrito por variáveis de ambiente)
+            try:
+                self.repo.config_writer().set_value("user", "name", "DailyPush Bot").release()
+                self.repo.config_writer().set_value("user", "email", "dailypush@github.com").release()
+                logger.info("Configuração Git padrão definida")
+            except:
+                logger.warning("Não foi possível configurar usuário Git padrão")
+            
+            logger.info(f"Novo repositório Git criado: {self.repo_path}")
         except Exception as e:
             logger.error(f"Erro ao inicializar repositório: {e}")
             sys.exit(1)
@@ -128,6 +140,9 @@ Este é um commit automático gerado pelo DailyPush.
             True se o commit foi bem-sucedido, False caso contrário
         """
         try:
+            # Verifica se é o primeiro commit
+            is_first_commit = len(list(self.repo.iter_commits())) == 0
+            
             # SEMPRE cria um arquivo para commit (mesmo sem mudanças)
             logger.info("Criando arquivo para commit diario...")
             self.create_daily_file()
@@ -148,7 +163,11 @@ Este é um commit automático gerado pelo DailyPush.
                 logger.debug(f"Erro ao remover logs: {e}")
             
             # Cria a mensagem do commit
-            message = self.get_random_activity_message()
+            if is_first_commit:
+                message = "First commit - DailyPush setup"
+                logger.info("Criando primeiro commit...")
+            else:
+                message = self.get_random_activity_message()
             
             # Faz o commit
             commit = self.repo.index.commit(message)
@@ -159,6 +178,28 @@ Este é um commit automático gerado pelo DailyPush.
         except Exception as e:
             logger.error(f"Erro ao fazer commit: {e}")
             return False
+    
+    def should_push_to_github(self) -> tuple[bool, int, int]:
+        """
+        Verifica se deve fazer push para o GitHub
+        
+        Returns:
+            (deve_fazer_push, total_commits, commits_restantes)
+        """
+        total_commits = len(list(self.repo.iter_commits()))
+        
+        # Define um limite aleatório entre 25 e 30 commits
+        if not hasattr(self, '_push_threshold'):
+            self._push_threshold = random.randint(25, 30)
+            logger.info(f"🎯 Limite de commits definido: {self._push_threshold}")
+        
+        # Faz push quando atingir o limite
+        if total_commits >= self._push_threshold:
+            return True, total_commits, 0
+        
+        # Calcula quantos commits ainda precisa
+        commits_needed = self._push_threshold - total_commits
+        return False, total_commits, commits_needed
     
     def push_to_remote(self, remote_name: str = "origin") -> bool:
         """
@@ -185,34 +226,45 @@ Este é um commit automático gerado pelo DailyPush.
         
         # SEMPRE faz o commit (para manter estatísticas ativas)
         if self.make_commit():
-            # Tenta fazer o push (opcional)
-            try:
-                if self.push_to_remote():
-                    logger.info("Rotina diária concluída com sucesso! 🎉")
-                else:
-                    logger.warning("Commit realizado, mas push falhou (pode ser configurado depois)")
-            except:
-                logger.warning("Commit realizado, mas push falhou (pode ser configurado depois)")
+            # Verifica se deve fazer push
+            should_push, total_commits, commits_needed = self.should_push_to_github()
+            
+            if should_push:
+                logger.info(f"🎯 Total de commits: {total_commits}")
+                logger.info(f"📤 Fazendo push para GitHub (limite: {self._push_threshold})...")
+                
+                # Tenta fazer o push
+                try:
+                    if self.push_to_remote():
+                        logger.info("🎉 Rotina diária concluída com sucesso!")
+                        logger.info(f"✅ {total_commits} commits enviados para o GitHub!")
+                        logger.info("📊 Suas estatísticas do GitHub estão atualizadas!")
+                        
+                        # Reseta o limite para a próxima rodada
+                        self._push_threshold = random.randint(25, 30)
+                        logger.info(f"🔄 Novo limite definido: {self._push_threshold} commits")
+                    else:
+                        logger.warning("⚠️ Commit realizado, mas push falhou")
+                        logger.info("💡 Execute novamente para tentar o push")
+                except Exception as e:
+                    logger.warning(f"⚠️ Commit realizado, mas push falhou: {e}")
+                    logger.info("💡 Execute novamente para tentar o push")
+            else:
+                logger.info(f"📊 Total de commits: {total_commits}")
+                logger.info(f" Acumulando commits... ({commits_needed} commits restantes)")
+                logger.info(f"🎯 Push será feito quando atingir {self._push_threshold} commits")
+                logger.info("🚀 Continue executando o DailyPush diariamente!")
+            
             return True
         else:
-            logger.error("Falha ao fazer commit")
+            logger.error("❌ Falha ao fazer commit")
             return False
 
 def main():
     """Função principal"""
     load_dotenv()
     
-    # Verifica se estamos em um repositório Git
-    try:
-        git.Repo(".")
-    except git.InvalidGitRepositoryError:
-        logger.error("Este diretório não é um repositório Git!")
-        logger.info("Por favor, inicialize um repositório Git primeiro:")
-        logger.info("git init")
-        logger.info("git remote add origin <seu-repositorio>")
-        sys.exit(1)
-    
-    # Inicializa o DailyPush
+    # Inicializa o DailyPush (cria repositório Git se necessário)
     daily_push = DailyPush()
     
     # Executa a rotina diária
@@ -220,6 +272,17 @@ def main():
     
     if success:
         logger.info("DailyPush executado com sucesso!")
+        
+        # Verifica se é o primeiro commit e dá instruções
+        if len(list(daily_push.repo.iter_commits())) == 1:
+            logger.info("")
+            logger.info("🎉 Primeiro commit realizado com sucesso!")
+            logger.info("📋 Próximos passos para sincronizar com GitHub:")
+            logger.info("1. Crie um repositório no GitHub")
+            logger.info("2. Execute: git remote add origin <URL-DO-REPOSITORIO>")
+            logger.info("3. Execute: git push -u origin master")
+            logger.info("4. Configure GitHub Actions para automação completa")
+        
         sys.exit(0)
     else:
         logger.error("DailyPush falhou!")
